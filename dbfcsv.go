@@ -4,11 +4,15 @@ import (
 	"encoding/csv"
 	"os"
 	"flag"
+	"fmt"
+	"time"
 	"unicode/utf8"
-	"code.google.com/p/go-dbf/godbf"
+	"github.com/LindsayBradford/go-dbf/godbf"
 )
 
 func main() {
+	t0 := time.Now();
+	
 	delimiter := flag.String("d", "|", "delimiter used to separate fields")
 	headers := flag.Bool("h", false, "display headers")
 	flag.Parse()
@@ -17,21 +21,18 @@ func main() {
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
+
+	file, err := os.Create(path+".csv")
 	
-	dbfTable, err := godbf.NewFromFile(path, "UTF8")
+	dbfTable, err := godbf.NewFromFile(path, "CP866")
 	if err != nil { panic(err) }
 
 	comma, _ := utf8.DecodeRuneInString(*delimiter)
-	out := csv.NewWriter(os.Stdout)
+	out := csv.NewWriter(file)
 	out.Comma = comma
 
 	if *headers { 
-		fields := dbfTable.Fields()
-		fieldRow := make([]string, len(fields))
-		for i := 0; i < len(fields); i++ {
-			fieldRow[i] = fields[i].FieldName()
-		}
-		out.Write(fieldRow)
+		out.Write(dbfTable.FieldNames())
 		out.Flush()
 	}
 
@@ -41,4 +42,7 @@ func main() {
 		out.Write(row)
 		out.Flush()
 	}
+
+	t1 := time.Now();
+    fmt.Printf("Elapsed time: %v\n", t1.Sub(t0));
 }
